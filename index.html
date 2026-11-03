@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="/">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="Pandlish — học tiếng Anh A1–B2 bằng game gộp bóng thạch cùng gấu trúc Bao. Learn English by merging jelly balls with Bao the panda.">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Pandlish">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>Pandlish — Learn English with Bao</title>
+  <meta name="theme-color" content="#1A1D24">
+  <link rel="manifest" href="manifest.json">
+  <!-- Zero-flash start: the page is dark from the first paint and shows a
+       small loader until Flutter renders its first frame. -->
+  <style>
+    html, body { margin: 0; height: 100%; background: #1A1D24; }
+    #pandlish-loader {
+      position: fixed; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 16px;
+      background: radial-gradient(circle at 50% 40%, #232838 0%, #1A1D24 60%);
+      color: #ffffff; font: 600 15px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+      transition: opacity 240ms ease-out;
+    }
+    #pandlish-loader.done { opacity: 0; pointer-events: none; }
+    #pandlish-loader .ring {
+      width: 44px; height: 44px; border-radius: 50%;
+      border: 5px solid rgba(255, 255, 255, 0.15); border-top-color: #4A7FE8;
+      animation: pandlish-spin 0.9s linear infinite;
+    }
+    @keyframes pandlish-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) {
+      #pandlish-loader .ring { animation-duration: 3s; }
+    }
+  </style>
+</head>
+<body>
+  <div id="pandlish-loader" role="status" aria-live="polite">
+    <div class="ring"></div>
+    <div>Pandlish</div>
+  </div>
+  <script>
+    window.addEventListener('flutter-first-frame', function () {
+      var loader = document.getElementById('pandlish-loader');
+      if (!loader) { return; }
+      loader.classList.add('done');
+      setTimeout(function () { loader.remove(); }, 300);
+    });
+  </script>
+  <!--
+    You can customize the "flutter_bootstrap.js" script.
+    This is useful to provide a custom configuration to the Flutter loader
+    or to give the user feedback during the initialization process.
+
+    For more details:
+    * https://docs.flutter.dev/platform-integration/web/initialization
+  -->
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>
