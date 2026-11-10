@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="/">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="Pandlish — học tiếng Anh A1–B2 bằng game gộp bóng thạch cùng gấu trúc Bao. Learn English by merging jelly balls with Bao the panda.">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Pandlish">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>Pandlish — Learn English with Bao</title>
+  <meta name="theme-color" content="#1A1D24">
+  <link rel="manifest" href="manifest.json">
+  <!-- Zero-flash start (Master Spec v2.2 §4): the page is dark from the
+       first paint. v2.4 §10: instead of a spinner, a canvas loader shows Bao's
+       head hopping after a squishy ball (with eyes) until Flutter renders
+       its first frame. Plain JS / canvas, no assets. -->
+  <style>
+    html, body { margin: 0; height: 100%; background: #1A1D24; }
+    #pandlish-loader {
+      position: fixed; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 6px;
+      background: radial-gradient(circle at 50% 40%, #232838 0%, #1A1D24 62%);
+      color: #ffffff; font: 600 15px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+      transition: opacity 260ms ease-out;
+    }
+    #pandlish-loader.done { opacity: 0; pointer-events: none; }
+    #pandlish-loader canvas { display: block; width: 320px; height: 170px; max-width: 86vw; }
+    #pandlish-loader .title {
+      font-weight: 900; font-size: 26px; letter-spacing: 1px; color: #FFE84D;
+      text-shadow: 0 2px 0 #000, 2px 0 0 #000, -2px 0 0 #000, 0 -2px 0 #000;
+    }
+    #pandlish-loader .sub { font-size: 13px; color: rgba(255, 255, 255, 0.72); }
+    #pandlish-loader .dots::after {
+      content: ''; display: inline-block; width: 1.2em; text-align: left;
+      animation: pandlish-dots 1.2s steps(4, end) infinite;
+    }
+    @keyframes pandlish-dots {
+      0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; }
+    }
+  </style>
+</head>
+<body>
+  <div id="pandlish-loader" role="status" aria-live="polite" aria-label="Pandlish">
+    <canvas id="pandlish-loader-canvas" width="320" height="170" aria-hidden="true"></canvas>
+    <div class="title">Pandlish</div>
+    <div class="sub"><span id="pandlish-loader-text">Đang tải</span><span class="dots"></span></div>
+  </div>
+  <script>
+    (function () {
+      var loader = document.getElementById('pandlish-loader');
+      var canvas = document.getElementById('pandlish-loader-canvas');
+      var label = document.getElementById('pandlish-loader-text');
+      var lang = (navigator.language || 'vi').toLowerCase();
+      if (label && lang.indexOf('vi') !== 0) { label.textContent = 'Loading'; }
+      var running = true;
+      var raf = 0;
+
+      function finish() {
+        running = false;
+        if (raf) { cancelAnimationFrame(raf); }
+        if (!loader) { return; }
+        loader.classList.add('done');
+        setTimeout(function () { if (loader && loader.parentNode) { loader.parentNode.removeChild(loader); } }, 320);
+      }
+      window.addEventListener('flutter-first-frame', finish);
+
+      if (!canvas || !canvas.getContext) { return; }
+      var ctx = canvas.getContext('2d');
+      var W = 320, H = 170, GROUND = 140;
+      var dpr = Math.min(window.devicePixelRatio || 1, 3);
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var speed = reduce ? 0.3 : 1;
+      var started = performance.now();
+      var OUTLINE = '#000000';
+
+      function ellipse(x, y, rx, ry, fill, stroke, width, rot) {
+        ctx.beginPath();
+        ctx.ellipse(x, y, rx, ry, rot || 0, 0, Math.PI * 2);
+        if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+        if (stroke) { ctx.lineWidth = width || 3; ctx.strokeStyle = stroke; ctx.stroke(); }
+      }
+
+      function ground(t) {
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+        ctx.beginPath(); ctx.moveTo(8, GROUND); ctx.lineTo(W - 8, GROUND); ctx.stroke();
+        var offset = (t * 150) % 40;
+        ctx.strokeStyle = 'rgba(255,255,255,0.32)';
+        for (var x = W - offset; x > -20; x -= 40) {
+          ctx.beginPath(); ctx.moveTo(x, GROUND + 9); ctx.lineTo(x + 14, GROUND + 9); ctx.stroke();
+        }
+        // twinkling stars drifting by
+        for (var i = 0; i < 7; i++) {
+          var sx = (W + 30 - ((t * (18 + i * 5) + i * 53) % (W + 60)));
+          var sy = 14 + (i * 23) % 70;
+          var a = 0.25 + 0.25 * Math.sin(t * 3 + i);
+          ctx.fillStyle = 'rgba(255,232,77,' + a.toFixed(2) + ')';
+          ctx.fillRect(sx, sy, 2.5, 2.5);
+        }
+      }
+
+      function ball(t) {
+        var period = 0.62;
+        var phase = (t % period) / period;
+        var hop = Math.sin(phase * Math.PI);
+        var r = 22;
+        var squash = hop < 0.18 ? 1 - (0.18 - hop) * 1.2 : 1;
+        var sx = 2 - squash, sy = squash;
+        var x = 226 + Math.sin(t * 1.7) * 6;
+        var y = GROUND - r * sy - hop * 30;
+        ellipse(x, GROUND + 2, r * (1.05 - hop * 0.35), 5, 'rgba(0,0,0,0.35)');
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(sx, sy);
+        var g = ctx.createLinearGradient(0, -r, 0, r);
+        g.addColorStop(0, '#FF7CCB');
+        g.addColorStop(1, '#C23BE0');
+        ellipse(0, 0, r, r, g, OUTLINE, 3.5);
+        ellipse(-7, -10, 7, 4, 'rgba(255,255,255,0.75)', null, 0, -0.5);
+        // eyes look back at Bao; blink every few seconds
+        var blink = (t % 3.1) < 0.12 ? 0.15 : 1;
+        var look = -2.2;
+        [-7, 7].forEach(function (ex) {
+          ellipse(ex - 2, -1, 5.2, 6.4 * blink, '#FFFFFF', OUTLINE, 2);
+          if (blink > 0.5) { ellipse(ex - 2 + look, 0.5, 2.4, 3.2, OUTLINE); }
+        });
+        ctx.beginPath();
+        ctx.lineWidth = 2.2; ctx.strokeStyle = OUTLINE; ctx.lineCap = 'round';
+        ctx.arc(-2, 8, 4.5, 0.15 * Math.PI, 0.85 * Math.PI);
+        ctx.stroke();
+        ctx.restore();
+        // motion streaks behind the ball
+        ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+        for (var i = 0; i < 3; i++) {
+          var ly = y - 8 + i * 9;
+          ctx.beginPath(); ctx.moveTo(x + r + 6, ly); ctx.lineTo(x + r + 16 + i * 4, ly); ctx.stroke();
+        }
+      }
+
+      // Bao's head hops after the ball on the same beat, a little behind
+      // it, with squash on landing, a forward lean in the air and a dust
+      // puff each time it touches down.
+      var HOP_PERIOD = 0.62;
+      var HOP_LAG = 0.24;
+
+      function landingDust(x, phase) {
+        if (phase > 0.3) { return; }
+        var age = phase / 0.3;
+        for (var i = 0; i < 3; i++) {
+          var px = x - 18 - i * 11 - age * 22;
+          var py = GROUND - 3 - age * 7 - i * 2;
+          ctx.fillStyle = 'rgba(255,255,255,' + (0.32 * (1 - age)).toFixed(2) + ')';
+          ctx.beginPath(); ctx.arc(px, py, 2.5 + age * 5 - i * 0.6, 0, Math.PI * 2); ctx.fill();
+        }
+      }
+
+      function pandaHead(t) {
+        var lagged = t - HOP_LAG;
+        var phase = ((lagged % HOP_PERIOD) + HOP_PERIOD) % HOP_PERIOD / HOP_PERIOD;
+        var hop = Math.sin(phase * Math.PI);
+        var squash = hop < 0.2 ? 1 - (0.2 - hop) * 1.1 : 1 + hop * 0.04;
+        var sx = 2 - squash, sy = squash;
+        var x = 102 + Math.sin(t * 1.7 + 0.9) * 5;
+        var y = GROUND - 30 * sy - hop * 38;
+        ellipse(x, GROUND + 2, 30 * (1.05 - hop * 0.4), 6, 'rgba(0,0,0,0.35)');
+        landingDust(x, phase);
+        // speed lines behind the head while it is in the air
+        if (hop > 0.25) {
+          ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+          for (var i = 0; i < 3; i++) {
+            var ly = y - 10 + i * 10;
+            ctx.beginPath(); ctx.moveTo(x - 40 - i * 3, ly); ctx.lineTo(x - 52 - i * 5, ly); ctx.stroke();
+          }
+        }
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(-0.05 + hop * 0.16);
+        ctx.scale(sx, sy);
+        // ears
+        ellipse(-22, -22, 10, 10, '#23232B', OUTLINE, 3);
+        ellipse(22, -22, 10, 10, '#23232B', OUTLINE, 3);
+        // headphones band
+        ctx.beginPath();
+        ctx.lineWidth = 6; ctx.strokeStyle = OUTLINE;
+        ctx.arc(0, 2, 30, Math.PI * 1.08, Math.PI * 1.92); ctx.stroke();
+        ctx.beginPath();
+        ctx.lineWidth = 3.5; ctx.strokeStyle = '#7DF04B';
+        ctx.arc(0, 2, 30, Math.PI * 1.08, Math.PI * 1.92); ctx.stroke();
+        // face
+        ellipse(0, 0, 31, 28, '#FFFFFF', OUTLINE, 3.5);
+        ellipse(-29, 6, 6, 10, '#7DF04B', OUTLINE, 3);
+        ellipse(29, 6, 6, 10, '#7DF04B', OUTLINE, 3);
+        // eye patches, eyes on the ball
+        ellipse(-11, 0, 8.5, 11, '#23232B', null, 0, 0.5);
+        ellipse(13, 0, 8.5, 11, '#23232B', null, 0, -0.5);
+        var blink = (t % 2.7) < 0.1 ? 0.2 : 1;
+        ellipse(-10, -1, 4.2, 5 * blink, '#FFFFFF');
+        ellipse(14, -1, 4.2, 5 * blink, '#FFFFFF');
+        if (blink > 0.5) {
+          ellipse(-8.4, -0.5, 2, 2.6, OUTLINE);
+          ellipse(15.6, -0.5, 2, 2.6, OUTLINE);
+        }
+        ellipse(-17, 11, 4.5, 2.6, 'rgba(255,79,184,0.55)');
+        ellipse(20, 11, 4.5, 2.6, 'rgba(255,79,184,0.55)');
+        ellipse(2, 9, 4, 3, '#23232B');
+        // mouth: a smile on the ground, an excited "o" in the air
+        if (hop > 0.3) {
+          ellipse(2, 16, 3.4, 3 + hop * 1.6, '#E2435B', OUTLINE, 2);
+        } else {
+          ctx.beginPath();
+          ctx.lineWidth = 2.2; ctx.strokeStyle = OUTLINE; ctx.lineCap = 'round';
+          ctx.arc(2, 12, 4.5, 0.15 * Math.PI, 0.85 * Math.PI);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      function draw(t) {
+        ctx.clearRect(0, 0, W, H);
+        ground(t);
+        ball(t);
+        pandaHead(t);
+      }
+
+      function frame(now) {
+        if (!running) { return; }
+        draw(((now - started) / 1000) * speed);
+        raf = requestAnimationFrame(frame);
+      }
+      raf = requestAnimationFrame(frame);
+    })();
+  </script>
+  <!--
+    You can customize the "flutter_bootstrap.js" script.
+    This is useful to provide a custom configuration to the Flutter loader
+    or to give the user feedback during the initialization process.
+
+    For more details:
+    * https://docs.flutter.dev/platform-integration/web/initialization
+  -->
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>
