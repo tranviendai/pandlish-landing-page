@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "user_version": 14691781,
+  "db_bytes": 39059456,
+  "db_sha256": "3320d4a2942fc8440f20761c06e4bff45c6224d58a930436752b698b927b6323",
+  "gz_bytes": 13409403,
+  "words_per_tier": 16,
+  "asset": "assets/dictionary.db.gz",
+  "courses": 79,
+  "topics": 54,
+  "words": 104745
+}
