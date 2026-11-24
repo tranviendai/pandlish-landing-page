@@ -109,198 +109,138 @@
         if (stroke) { ctx.lineWidth = width || 3; ctx.strokeStyle = stroke; ctx.stroke(); }
       }
 
-      function starsAndStreaks(t) {
-        // Diagonal speed streaks sweeping past rocket flight path
-        ctx.strokeStyle = 'rgba(156,228,255,0.42)';
-        ctx.lineWidth = 2.4;
-        ctx.lineCap = 'round';
-        var lines = [
-          [56, 36, 26, 0.0],
-          [260, 44, 22, 0.3],
-          [40, 118, 28, 0.55],
-          [274, 126, 24, 0.78],
-          [110, 152, 22, 0.2]
-        ];
-        for (var i = 0; i < lines.length; i++) {
-          var l = lines[i];
-          var p = (t * 1.45 + l[3]) % 1;
-          var x = l[0] - p * 34;
-          var y = l[1] + p * 15;
-          ctx.globalAlpha = Math.sin(p * Math.PI) * 0.65;
-          ctx.beginPath();
-          ctx.moveTo(x, y);
-          ctx.lineTo(x - l[2] * 0.91, y + l[2] * 0.41);
-          ctx.stroke();
+      function ground(t) {
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+        ctx.beginPath(); ctx.moveTo(8, GROUND); ctx.lineTo(W - 8, GROUND); ctx.stroke();
+        var offset = (t * 150) % 40;
+        ctx.strokeStyle = 'rgba(255,255,255,0.32)';
+        for (var x = W - offset; x > -20; x -= 40) {
+          ctx.beginPath(); ctx.moveTo(x, GROUND + 9); ctx.lineTo(x + 14, GROUND + 9); ctx.stroke();
         }
-        ctx.globalAlpha = 1;
-        // Twinkling cosmic stars
-        var stars = [[42, 66, 3], [268, 72, 3.2], [72, 142, 2.6], [240, 146, 2.8], [164, 20, 2.5]];
-        for (var j = 0; j < stars.length; j++) {
-          var s = stars[j];
-          var pulse = 0.45 + 0.55 * Math.sin(t * 4.2 + j * 1.7);
-          ctx.fillStyle = j % 2 === 0
-            ? 'rgba(255,232,77,' + (0.75 * pulse).toFixed(2) + ')'
-            : 'rgba(180,240,255,' + (0.75 * pulse).toFixed(2) + ')';
-          ctx.beginPath();
-          ctx.arc(s[0], s[1], s[2] * (0.65 + 0.35 * pulse), 0, Math.PI * 2);
-          ctx.fill();
+        // twinkling stars drifting by
+        for (var i = 0; i < 7; i++) {
+          var sx = (W + 30 - ((t * (18 + i * 5) + i * 53) % (W + 60)));
+          var sy = 14 + (i * 23) % 70;
+          var a = 0.25 + 0.25 * Math.sin(t * 3 + i);
+          ctx.fillStyle = 'rgba(255,232,77,' + a.toFixed(2) + ')';
+          ctx.fillRect(sx, sy, 2.5, 2.5);
         }
       }
 
-      function rocketPandi(t) {
-        // Steady cruising flight + smooth continuous engine vibration
-        var vibX = Math.sin(t * 28) * 1.1 + Math.cos(t * 43) * 0.5;
-        var vibY = Math.cos(t * 34) * 1.2 + Math.sin(t * 51) * 0.45;
-        var vibRot = Math.sin(t * 31) * 0.015;
-        var flicker = 0.92 + 0.11 * Math.sin(t * 29) + 0.06 * Math.cos(t * 47);
-
+      function ball(t) {
+        var period = 0.62;
+        var phase = (t % period) / period;
+        var hop = Math.sin(phase * Math.PI);
+        var r = 22;
+        var squash = hop < 0.18 ? 1 - (0.18 - hop) * 1.2 : 1;
+        var sx = 2 - squash, sy = squash;
+        var x = 226 + Math.sin(t * 1.7) * 6;
+        var y = GROUND - r * sy - hop * 30;
+        ellipse(x, GROUND + 2, r * 1.2 * (1 - hop * 0.4), 5, 'rgba(0,0,0,0.35)');
         ctx.save();
-        ctx.translate(162 + vibX, 94 + vibY);
-        ctx.rotate(-0.40 + vibRot);
-        ctx.scale(0.84, 0.84);
-
-        // 1. Lush rounded glowing rocket exhaust flame
-        var fl = 48 * flicker;
-        var sway = Math.sin(t * 36) * 1.5;
-        var gradFlame = ctx.createLinearGradient(-52, 0, -52 - fl, 0);
-        gradFlame.addColorStop(0, '#FFD84D');
-        gradFlame.addColorStop(0.52, '#FF7A21');
-        gradFlame.addColorStop(1, '#FF4D1A');
-        ctx.fillStyle = gradFlame;
-        ctx.beginPath();
-        ctx.moveTo(-52, -12);
-        ctx.bezierCurveTo(-52 - fl * 0.35, -18.5, -52 - fl * 0.96, -12 + sway * 0.6, -52 - fl, sway);
-        ctx.bezierCurveTo(-52 - fl * 0.96, 12 + sway * 0.6, -52 - fl * 0.35, 18.5, -52, 12);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.fillStyle = '#FFFEEB';
-        ctx.beginPath();
-        ctx.moveTo(-52, -4.6);
-        ctx.bezierCurveTo(-52 - fl * 0.22, -6.5, -52 - fl * 0.44, -3.8, -52 - fl * 0.46, sway * 0.2);
-        ctx.bezierCurveTo(-52 - fl * 0.44, 3.8, -52 - fl * 0.22, 6.5, -52, 4.6);
-        ctx.closePath();
-        ctx.fill();
-
-        // 2. Curved metallic silver tail fins
-        [-1, 1].forEach(function (s) {
-          ctx.beginPath();
-          ctx.moveTo(-18, s * 19);
-          ctx.bezierCurveTo(-29, s * 30, -45, s * 38, -58, s * 34);
-          ctx.bezierCurveTo(-55, s * 25, -50, s * 18, -45, s * 13);
-          ctx.closePath();
-          ctx.fillStyle = s < 0 ? '#E4ECF8' : '#B3C3DC';
-          ctx.fill();
-          ctx.lineWidth = 3.2; ctx.strokeStyle = '#1E2433'; ctx.stroke();
+        ctx.translate(x, y);
+        ctx.rotate(t * 4);
+        ctx.scale(sx, sy);
+        ellipse(0, 0, r, r, '#7DF04B', OUTLINE, 3);
+        ellipse(-r * 0.35, -r * 0.35, r * 0.32, r * 0.18, 'rgba(255,255,255,0.6)', null, 0, -0.6);
+        var blink = (t % 2.1) < 0.1 ? 0.2 : 1;
+        var look = Math.sin(t * 2) * 2;
+        [-7, 7].forEach(function (ex) {
+          ellipse(ex - 2, -1, 5.2, 6.4 * blink, '#FFFFFF', OUTLINE, 2);
+          if (blink > 0.5) { ellipse(ex - 2 + look, 0.5, 2.4, 3.2, OUTLINE); }
         });
-
-        // 3. Brushed titanium thruster nozzle
         ctx.beginPath();
-        ctx.moveTo(-45, -12.5); ctx.lineTo(-55, -14.5);
-        ctx.quadraticCurveTo(-58, 0, -55, 14.5); ctx.lineTo(-45, 12.5); ctx.closePath();
-        ctx.fillStyle = '#8395B0'; ctx.fill();
-        ctx.lineWidth = 3.2; ctx.strokeStyle = '#1E2433'; ctx.stroke();
-
-        // 4. Sleek plump pearl-white & metallic silver hull
-        ctx.beginPath();
-        ctx.moveTo(-47, -13.5);
-        ctx.bezierCurveTo(-26, -26.5, 20, -27.5, 52, -14.5);
-        ctx.bezierCurveTo(66, -9, 76, -3.2, 78, 0);
-        ctx.bezierCurveTo(76, 3.2, 66, 9, 52, 14.5);
-        ctx.bezierCurveTo(20, 27.5, -26, 26.5, -47, 13.5);
-        ctx.bezierCurveTo(-51, 6, -51, -6, -47, -13.5);
-        ctx.closePath();
-        var hullGrad = ctx.createLinearGradient(0, -27, 0, 27);
-        hullGrad.addColorStop(0, '#FFFFFF');
-        hullGrad.addColorStop(0.38, '#F2F6FC');
-        hullGrad.addColorStop(0.74, '#D5DFEE');
-        hullGrad.addColorStop(1, '#9EB0CA');
-        ctx.fillStyle = hullGrad; ctx.fill();
-        ctx.save(); ctx.clip();
-        // Metallic brushed-silver nose cone
-        ctx.beginPath();
-        ctx.moveTo(44, -27); ctx.quadraticCurveTo(53, 0, 44, 27);
-        ctx.lineTo(82, 27); ctx.lineTo(82, -27); ctx.closePath();
-        ctx.fillStyle = '#C2D0E4'; ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(44, -26); ctx.quadraticCurveTo(53, 0, 44, 26);
-        ctx.lineWidth = 2.6; ctx.strokeStyle = '#1E2433'; ctx.stroke();
-        // Glossy specular strip
-        ctx.beginPath();
-        ctx.moveTo(-30, -14); ctx.bezierCurveTo(0, -21, 32, -19, 64, -6);
-        ctx.lineWidth = 4.5; ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.stroke();
+        ctx.lineWidth = 2.2; ctx.strokeStyle = OUTLINE; ctx.lineCap = 'round';
+        ctx.arc(-2, 8, 4.5, 0.15 * Math.PI, 0.85 * Math.PI);
+        ctx.stroke();
         ctx.restore();
-        ctx.lineWidth = 3.4; ctx.strokeStyle = '#1E2433'; ctx.stroke();
+        // motion streaks behind the ball
+        ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+        for (var i = 0; i < 3; i++) {
+          var ly = y - 8 + i * 9;
+          ctx.beginPath(); ctx.moveTo(x + r + 6, ly); ctx.lineTo(x + r + 16 + i * 4, ly); ctx.stroke();
+        }
+      }
 
-        // 5. Glowing sapphire porthole
-        ellipse(25, 2, 11, 11, '#D5DFEE', '#1E2433', 2.8);
-        ellipse(25, 2, 7.2, 7.2, '#38BDF8', '#1E2433', 2.0);
-        ellipse(22.6, -0.6, 2.3, 2.3, '#E0F7FF');
+      var HOP_PERIOD = 0.62;
+      var HOP_LAG = 0.24;
 
-        // 6. Default Pandi (NO headphones + windswept fur!) hugging snugly
-        ellipse(-33, -22, 6.5, 6.5, '#FFFFFF', '#1E2433', 3.0);
-        ctx.beginPath();
-        ctx.moveTo(-29, -17);
-        ctx.bezierCurveTo(-27, -36, -8, -42, 9, -34);
-        ctx.bezierCurveTo(16, -30, 17, -19, 9, -13);
-        ctx.bezierCurveTo(-4, -8, -20, -9, -29, -17);
-        ctx.closePath();
-        ctx.fillStyle = '#FFFFFF'; ctx.fill();
-        ctx.lineWidth = 3.2; ctx.strokeStyle = '#1E2433'; ctx.stroke();
-        ellipse(-15, -8, 10.5, 7.5, '#3A4254', '#1E2433', 3.0, 0.24);
-        ellipse(-16.5, -7, 3.2, 2.2, '#FF9EC2');
-        ellipse(5, -13, 7.5, 11.5, '#3A4254', '#1E2433', 3.0, -0.18);
+      function landingDust(x, phase) {
+        if (phase > 0.3) { return; }
+        var age = phase / 0.3;
+        for (var i = 0; i < 3; i++) {
+          var px = x - 18 - i * 11 - age * 22;
+          var py = GROUND - 3 - age * 7 - i * 2;
+          ctx.fillStyle = 'rgba(255,255,255,' + (0.32 * (1 - age)).toFixed(2) + ')';
+          ctx.beginPath(); ctx.arc(px, py, 2.5 + age * 5 - i * 0.6, 0, Math.PI * 2); ctx.fill();
+        }
+      }
 
-        // Upright Default Pandi head with windswept crown & cheek fur!
+      function pandaHead(t) {
+        var lagged = t - HOP_LAG;
+        var phase = ((lagged % HOP_PERIOD) + HOP_PERIOD) % HOP_PERIOD / HOP_PERIOD;
+        var hop = Math.sin(phase * Math.PI);
+        var squash = hop < 0.2 ? 1 - (0.2 - hop) * 1.1 : 1 + hop * 0.04;
+        var sx = 2 - squash, sy = squash;
+        var x = 102 + Math.sin(t * 1.7 + 0.9) * 5;
+        var y = GROUND - 30 * sy - hop * 38;
+        ellipse(x, GROUND + 2, 30 * (1.05 - hop * 0.4), 6, 'rgba(0,0,0,0.35)');
+        landingDust(x, phase);
+        if (hop > 0.25) {
+          ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+          for (var i = 0; i < 3; i++) {
+            var ly = y - 10 + i * 10;
+            ctx.beginPath(); ctx.moveTo(x - 40 - i * 3, ly); ctx.lineTo(x - 52 - i * 5, ly); ctx.stroke();
+          }
+        }
         ctx.save();
-        ctx.translate(14, -52);
-        ctx.rotate(0.28);
-        var wf = Math.sin(t * 32) * 1.4;
-        ellipse(-27, -23, 11, 11, '#3A4254', '#1E2433', 3.2);
-        ellipse(27, -23, 11, 11, '#3A4254', '#1E2433', 3.2);
-        ellipse(0, 0, 34, 30, '#FFFFFF', '#1E2433', 3.4);
-        // Windswept crown tuft blowing backward
+        ctx.translate(x, y);
+        ctx.rotate(-0.05 + hop * 0.16);
+        ctx.scale(sx, sy);
+        // ears
+        ellipse(-22, -22, 10, 10, '#23232B', OUTLINE, 3);
+        ellipse(22, -22, 10, 10, '#23232B', OUTLINE, 3);
+        // headphones band
         ctx.beginPath();
-        ctx.moveTo(6, -28);
-        ctx.quadraticCurveTo(-4, -37, -15 + wf, -31);
-        ctx.quadraticCurveTo(-8, -30, -18 - wf * 0.7, -25);
-        ctx.quadraticCurveTo(-8, -26, -3, -27);
-        ctx.fillStyle = '#FFFFFF'; ctx.fill();
-        ctx.lineWidth = 2.8; ctx.strokeStyle = '#1E2433'; ctx.stroke();
-        // Windswept left cheek fluff
+        ctx.lineWidth = 6; ctx.strokeStyle = OUTLINE;
+        ctx.arc(0, 2, 30, Math.PI * 1.08, Math.PI * 1.92); ctx.stroke();
         ctx.beginPath();
-        ctx.moveTo(-31, 0);
-        ctx.quadraticCurveTo(-41 + wf * 0.6, 2, -40, 8);
-        ctx.quadraticCurveTo(-34, 9, -38 - wf * 0.5, 15);
-        ctx.quadraticCurveTo(-32, 14, -29, 13);
-        ctx.fillStyle = '#FFFFFF'; ctx.fill();
-        ctx.lineWidth = 2.6; ctx.strokeStyle = '#1E2433'; ctx.stroke();
-        // Eye patches + forward-looking glossy eyes
-        ellipse(-10, 2, 9.5, 12.5, '#3A4254', null, 0, 0.45);
-        ellipse(18, 1, 9.5, 12.5, '#3A4254', null, 0, -0.45);
-        ellipse(-8, 1, 5.5, 5.5, '#111521');
-        ellipse(20, 0, 5.5, 5.5, '#111521');
-        ellipse(-9.5, -1, 2.0, 2.0, '#FFFFFF');
-        ellipse(18.5, -2, 2.0, 2.0, '#FFFFFF');
-        ellipse(-20, 12, 6, 3.6, 'rgba(255,140,170,0.45)');
-        ellipse(26, 11, 6, 3.6, 'rgba(255,140,170,0.45)');
-        ellipse(6, 10, 4.2, 3.0, '#1E2433');
-        // Joyful open smile
-        ctx.beginPath();
-        ctx.moveTo(-1, 13); ctx.quadraticCurveTo(6, 15.5, 13, 13);
-        ctx.quadraticCurveTo(12, 22, 6, 22); ctx.quadraticCurveTo(0, 22, -1, 13);
-        ctx.closePath();
-        ctx.fillStyle = '#E2435B'; ctx.fill();
-        ctx.lineWidth = 2.2; ctx.strokeStyle = '#1E2433'; ctx.stroke();
-        ctx.restore();
-
+        ctx.lineWidth = 3.5; ctx.strokeStyle = '#7DF04B';
+        ctx.arc(0, 2, 30, Math.PI * 1.08, Math.PI * 1.92); ctx.stroke();
+        // face
+        ellipse(0, 0, 31, 28, '#FFFFFF', OUTLINE, 3.5);
+        ellipse(-29, 6, 6, 10, '#7DF04B', OUTLINE, 3);
+        ellipse(29, 6, 6, 10, '#7DF04B', OUTLINE, 3);
+        // eye patches, eyes on the ball
+        ellipse(-11, 0, 8.5, 11, '#23232B', null, 0, 0.5);
+        ellipse(13, 0, 8.5, 11, '#23232B', null, 0, -0.5);
+        var blink = (t % 2.7) < 0.1 ? 0.2 : 1;
+        ellipse(-10, -1, 4.2, 5 * blink, '#FFFFFF');
+        ellipse(14, -1, 4.2, 5 * blink, '#FFFFFF');
+        if (blink > 0.5) {
+          ellipse(-8.4, -0.5, 2, 2.6, OUTLINE);
+          ellipse(15.6, -0.5, 2, 2.6, OUTLINE);
+        }
+        ellipse(-17, 11, 4.5, 2.6, 'rgba(255,79,184,0.55)');
+        ellipse(20, 11, 4.5, 2.6, 'rgba(255,79,184,0.55)');
+        ellipse(2, 9, 4, 3, '#23232B');
+        if (hop > 0.3) {
+          ellipse(2, 16, 3.4, 3 + hop * 1.6, '#E2435B', OUTLINE, 2);
+        } else {
+          ctx.beginPath();
+          ctx.lineWidth = 2.2; ctx.strokeStyle = OUTLINE; ctx.lineCap = 'round';
+          ctx.arc(2, 12, 4.5, 0.15 * Math.PI, 0.85 * Math.PI);
+          ctx.stroke();
+        }
         ctx.restore();
       }
 
       function draw(t) {
         ctx.clearRect(0, 0, W, H);
-        starsAndStreaks(t);
-        rocketPandi(t);
+        ground(t);
+        ball(t);
+        pandaHead(t);
       }
 
       function frame(now) {
