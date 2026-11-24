@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "buckets": {
+    "zh": {
+      "asset": "assets/hanzi/cjk_strokes_zh.db.gz",
+      "user_version": 154002334,
+      "db_bytes": 36737024,
+      "db_sha256": "4bada202c0d6811d31528a64e800e87851ab92c6310184a68b270182431951ba",
+      "gz_bytes": 12479766,
+      "characters": 9574,
+      "largest_row_bytes": 7287
+    },
+    "ja": {
+      "asset": "assets/hanzi/cjk_strokes_ja.db.gz",
+      "user_version": 138686782,
+      "db_bytes": 42668032,
+      "db_sha256": "def77b2c5f0ccc683b9637b0ff46d2a1b28f9f0dae811cfee56710c19d368927",
+      "gz_bytes": 14604520,
+      "characters": 11083,
+      "largest_row_bytes": 7287
+    },
+    "ko": {
+      "asset": "assets/hanzi/cjk_strokes_ko.db.gz",
+      "user_version": 164232867,
+      "db_bytes": 21950464,
+      "db_sha256": "d143e10b53c6d0c6c9eb9e1de3d935e6c4a7fe426929bd0c377067e4c5edd98e",
+      "gz_bytes": 2335610,
+      "characters": 11223,
+      "largest_row_bytes": 3189
+    }
+  }
+}
